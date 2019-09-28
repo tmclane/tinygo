@@ -1354,6 +1354,16 @@ func (b *builder) createFunctionCall(instr *ssa.CallCommon) (llvm.Value, error) 
 			return b.emitSVCall(instr.Args)
 		case strings.HasPrefix(name, "(device/riscv.CSR)."):
 			return b.emitCSROperation(instr)
+		case name == "device/arm.ReadRegister" || name == "device/arm64.ReadRegister" || name == "device/riscv.ReadRegister":
+			return c.emitReadRegister(name, instr.Args)
+		case name == "device/arm.Asm" || name == "device/arm64.Asm" || name == "device/avr.Asm" || name == "device/riscv.Asm":
+			return c.emitAsm(instr.Args)
+		case name == "device/arm.AsmFull" || name == "device/arm64.AsmFull" || name == "device/avr.AsmFull" || name == "device/riscv.AsmFull":
+			return c.emitAsmFull(frame, instr)
+		case strings.HasPrefix(name, "device/arm.SVCall"):
+			return c.emitSVCall(frame, instr.Args)
+		case strings.HasPrefix(name, "device/arm64.SVCall"):
+			return c.emitSVCall(frame, instr.Args)
 		case strings.HasPrefix(name, "syscall.Syscall"):
 			return b.createSyscall(instr)
 		case strings.HasPrefix(name, "runtime/volatile.Load"):

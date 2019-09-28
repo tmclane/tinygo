@@ -13,6 +13,27 @@ import (
 	"tinygo.org/x/go-llvm"
 )
 
+// This is a compiler builtin, which reads the given register by name:
+//
+//     func ReadRegister(name string) uintptr
+//
+// The register name must be a constant, for example "sp".
+func (c *Compiler) emitReadRegister(name string, args []ssa.Value) (llvm.Value, error) {
+	fnType := llvm.FunctionType(c.uintptrType, []llvm.Type{}, false)
+	regname := constant.StringVal(args[0].(*ssa.Const).Value)
+	var asm string
+	switch name {
+	case "device/arm.ReadRegister", "device/arm64.ReadRegister":
+		asm = "mov $0, " + regname
+	case "device/riscv.ReadRegister":
+		asm = "mv $0, " + regname
+	default:
+		panic("unknown architecture")
+	}
+	target := llvm.InlineAsm(fnType, asm, "=r", false, false, 0)
+	return c.builder.CreateCall(target, nil, ""), nil
+}
+
 // This is a compiler builtin, which emits a piece of inline assembly with no
 // operands or return values. It is useful for trivial instructions, like wfi in
 // ARM or sleep in AVR.
